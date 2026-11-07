@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中越双向翻译</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f5f8;
+  margin: 0;
+  padding: 20px;
+  color: #222;
+}
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+}
+h2 { text-align: center; }
+select, textarea, button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin: 10px 0;
+  border-radius: 9px;
+  font-size: 16px;
+}
+textarea {
+  height: 150px;
+  border: 1px solid #ccc;
+}
+button {
+  border: 0;
+  background: #1677ff;
+  color: white;
+  font-weight: bold;
+}
+#result {
+  background: #f0f5ff;
+}
+#status {
+  color: #666;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>中越双向翻译</h2>
+
+<select id="direction">
+  <option value="vi|zh-CN">越南语 → 中文</option>
+  <option value="zh-CN|vi">中文 → 越南语</option>
+</select>
+
+<textarea id="source" placeholder="请输入要翻译的内容"></textarea>
+
+<button onclick="translateText()">开始翻译</button>
+
+<p>翻译结果：</p>
+<textarea id="result" readonly placeholder="翻译结果显示在这里"></textarea>
+
+<button onclick="copyResult()">复制翻译结果</button>
+<p id="status"></p>
+</div>
+
+<script>
+async function translateText() {
+  const source = document.getElementById("source").value.trim();
+  const result = document.getElementById("result");
+  const status = document.getElementById("status");
+  const direction = document.getElementById("direction").value;
+
+  if (!source) {
+    status.textContent = "请先输入文字";
+    return;
+  }
+
+  result.value = "";
+  status.textContent = "正在翻译，请稍候……";
+
+  try {
+    const url = "https://api.mymemory.translated.net/get?q="
+      + encodeURIComponent(source)
+      + "&langpair=" + encodeURIComponent(direction);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.responseStatus !== 200) {
+      throw new Error("翻译服务暂时不可用");
+    }
+
+    result.value = data.responseData.translatedText;
+    status.textContent = "翻译完成！";
+  } catch (error) {
+    status.textContent = "翻译失败，请检查网络或稍后重试。";
+  }
+}
+
+async function copyResult() {
+  const result = document.getElementById("result");
+
+  if (!result.value) {
+    document.getElementById("status").textContent = "暂无翻译结果";
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(result.value);
+    document.getElementById("status").textContent = "复制成功！";
+  } catch (error) {
+    result.select();
+    document.execCommand("copy");
+    document.getElementById("status").textContent = "请检查是否复制成功";
+  }
+}
+</script>
+</body>
+</html>
